@@ -1,0 +1,30 @@
+{
+  "name": "ember-name-promise-codemod",
+  "version": "1.0.0",
+  "description": "Replaces promise chains with anonymous functions with named versions",
+  "main": "transform.js",
+  "scripts": {
+    "lint": "eslint transform.js",
+    "test": "npm run lint && jest --bail"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/craigbilner/ember-name-promise-codemod.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/craigbilner/ember-name-promise-codemod/issues"
+  },
+  "homepage": "https://github.com/craigbilner/ember-name-promise-codemod#readme",
+  "devDependencies": {
+    "eslint": "3.14.1",
+    "eslint-config-airbnb": "14.0.0",
+    "eslint-plugin-import": "2.2.0",
+    "eslint-plugin-jsx-a11y": "3.0.2",
+    "eslint-plugin-react": "6.9.0",
+    "jest": "18.1.0",
+    "jscodeshift": "0.3.30"
+  }
+}
