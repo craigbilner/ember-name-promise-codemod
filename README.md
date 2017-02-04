@@ -45,7 +45,7 @@ export default Ember.Component.extend({
     updateUser(user) {
       user.save().then(this._p3.bind(this)).then(this._p2.bind(this)).then(this._p1.bind(this));
     },
-  }
+  },
 });
 ```
 
@@ -56,7 +56,7 @@ non-anonymous functions
 ```js
 import Ember from 'ember';
 import foo from 'somewhere';
-import bar from 'somewhere';
+import bar from 'somewhereElse';
 
 export default Ember.Component.extend({
   _p1()  {
