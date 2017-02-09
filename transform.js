@@ -37,7 +37,7 @@ const findAttachableParent = (j, path) => {
   return findAttachableParent(j, path.parent);
 };
 
-const makeMethod = (j, func, i) => {
+const makeMethod = (j, i, func, params) => {
   let funcBody;
 
   if (func.body && func.body.type !== 'BlockStatement') {
@@ -47,7 +47,7 @@ const makeMethod = (j, func, i) => {
     funcBody = func.body;
   }
 
-  const newFunc = j.functionExpression(null, func.params, funcBody);
+  const newFunc = j.functionExpression(null, params.concat(func.params), funcBody);
   const newMethod =
     j.property('init', j.identifier(`_p${i}`), newFunc);
   newMethod.method = true;
@@ -55,14 +55,22 @@ const makeMethod = (j, func, i) => {
   return newMethod;
 };
 
-const makeBoundCall = (j, i) => {
+const makeBoundCall = (j, i, params) => {
   // invoke this computed method
   const obj = j.memberExpression(j.thisExpression(), j.identifier(`_p${i}`));
   // add bind
   const callee = j.memberExpression(obj, j.identifier('bind'));
   // call bind with this
-  return j.callExpression(callee, [j.thisExpression()]);
+  return j.callExpression(callee, [j.thisExpression(), ...params]);
 };
+
+const isFreeVar = path => path.name !== 'property' && path.name !== 'object';
+
+const toIdentifier = j => name => j.identifier(name);
+
+const toParamName = node => node.name || (node.argument && node.argument.name);
+
+const exists = v => !!v;
 
 const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) => {
   let exprCount = startIndx;
@@ -76,10 +84,32 @@ const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) =>
       return path.node;
     }
 
-    parentObject.unshift(makeMethod(j, callExpression, exprCount));
+    const locals = [];
+    j(callExpression).find(j.VariableDeclarator).forEach(p => locals.push(p.value.id.name));
+
+    const params = callExpression.params.map(toParamName).filter(exists);
+
+    const freeRadicals = [];
+    j(callExpression).find(j.Identifier).filter(isFreeVar).forEach((p) => {
+      const name = p.value.name;
+      const isValid =
+        p.scope.isGlobal
+        && !locals.includes(name)
+        && !params.includes(name)
+        && !freeRadicals.includes(name)
+        && name !== 'undefined';
+
+      if (isValid) {
+        freeRadicals.push(name);
+      }
+    });
+
+    const extraParams = freeRadicals.map(toIdentifier(j));
+
+    parentObject.unshift(makeMethod(j, exprCount, callExpression, extraParams));
 
     /* eslint-disable no-param-reassign */
-    path.node.arguments = [makeBoundCall(j, exprCount)];
+    path.node.arguments = [makeBoundCall(j, exprCount, extraParams)];
     /* eslint-disable no-param-reassign */
 
     return path.node;
