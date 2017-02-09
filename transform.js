@@ -106,7 +106,7 @@ const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) =>
 
     const extraParams = freeRadicals.map(toIdentifier(j));
 
-    parentObject.unshift(makeMethod(j, exprCount, callExpression, extraParams));
+    parentObject.push(makeMethod(j, exprCount, callExpression, extraParams));
 
     /* eslint-disable no-param-reassign */
     path.node.arguments = [makeBoundCall(j, exprCount, extraParams)];
