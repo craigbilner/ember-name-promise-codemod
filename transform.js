@@ -68,9 +68,43 @@ const isFreeVar = path => path.name !== 'property' && path.name !== 'object';
 
 const toIdentifier = j => name => j.identifier(name);
 
-const toParamName = node => node.name || (node.argument && node.argument.name);
+const getDestructured = ({ name, value, properties, elements }) => {
+  if (name) {
+    return [name];
+  }
 
-const exists = v => !!v;
+  if (value) {
+    return getDestructured(value);
+  }
+
+  if (properties) {
+    return properties.reduce((ps, p) => {
+      ps.push(...getDestructured(p));
+      return ps;
+    }, []);
+  }
+
+  if (elements) {
+    return elements.reduce((ps, p) => {
+      ps.push(...getDestructured(p));
+      return ps;
+    }, []);
+  }
+
+  return [];
+};
+
+const toParamName = (params, node) => {
+  if (node.name) {
+    params.push(node.name);
+  } else if (node.argument && node.argument.name) {
+    params.push(node.argument.name);
+  } else {
+    params.push(...getDestructured(node));
+  }
+
+  return params;
+};
 
 const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) => {
   let exprCount = startIndx;
@@ -87,7 +121,9 @@ const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) =>
     const locals = [];
     j(callExpression).find(j.VariableDeclarator).forEach(p => locals.push(p.value.id.name));
 
-    const params = callExpression.params.map(toParamName).filter(exists);
+    const params =
+      callExpression.params
+        .reduce(toParamName, []);
 
     const freeRadicals = [];
     j(callExpression).find(j.Identifier).filter(isFreeVar).forEach((p) => {
@@ -97,6 +133,7 @@ const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) =>
         && !locals.includes(name)
         && !params.includes(name)
         && !freeRadicals.includes(name)
+        && p.name !== 'key'
         && name !== 'undefined';
 
       if (isValid) {
