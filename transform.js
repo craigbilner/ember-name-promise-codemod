@@ -64,7 +64,7 @@ const makeBoundCall = (j, i, params) => {
   return j.callExpression(callee, [j.thisExpression(), ...params]);
 };
 
-const isFreeVar = path => path.name !== 'property' && path.name !== 'object';
+const isFreeVar = path => path.name !== 'property';
 
 const toIdentifier = j => name => j.identifier(name);
 
@@ -106,7 +106,7 @@ const toParamName = (params, node) => {
   return params;
 };
 
-const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) => {
+const replaceAnonymousFuncsWithBoundMethods = (j, globals, expressions, startIndx = 0) => {
   let exprCount = startIndx;
   expressions.replaceWith((path) => {
     exprCount += 1;
@@ -125,11 +125,19 @@ const replaceAnonymousFuncsWithBoundMethods = (j, expressions, startIndx = 0) =>
       callExpression.params
         .reduce(toParamName, []);
 
+    j(callExpression).find(j.Identifier).forEach((p) => {
+      const parentType = p.parent.value.type;
+      if (parentType === 'FunctionExpression' || parentType === 'ArrowFunctionExpression') {
+        params.push(p.value.name);
+      }
+    });
+
     const freeRadicals = [];
     j(callExpression).find(j.Identifier).filter(isFreeVar).forEach((p) => {
       const name = p.value.name;
       const isValid =
-        p.scope.isGlobal
+        (p.scope.isGlobal || (!p.scope.isGlobal && p.scope.depth > 0))
+        && !globals.includes(name)
         && !locals.includes(name)
         && !params.includes(name)
         && !freeRadicals.includes(name)
@@ -158,11 +166,16 @@ const transform = (file, api) => {
   const j = api.jscodeshift;
   const root = j(file.source);
 
+  const globals = [];
+  root
+    .find(j.ImportDeclaration)
+    .forEach(path => path.node.specifiers.forEach(node => globals.push(node.local.name)));
+
   const thens = root.find(...isThen(j)).filter(isAnonymous);
   const catches = root.find(...isCatch(j)).filter(isAnonymous);
 
-  const count = replaceAnonymousFuncsWithBoundMethods(j, thens);
-  replaceAnonymousFuncsWithBoundMethods(j, catches, count);
+  const count = replaceAnonymousFuncsWithBoundMethods(j, globals, thens);
+  replaceAnonymousFuncsWithBoundMethods(j, globals, catches, count);
 
   return root.toSource();
 };

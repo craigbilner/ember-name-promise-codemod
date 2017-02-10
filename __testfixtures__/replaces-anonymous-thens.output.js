@@ -3,7 +3,7 @@ import Ember from 'ember';
 export default Ember.Component.extend({
   actions: {
     updateUser(user) {
-      user.save().then(this._p3.bind(this)).then(this._p2.bind(this)).then(this._p1.bind(this));
+      user.save().then(this._p3.bind(this, user)).then(this._p2.bind(this)).then(this._p1.bind(this));
     },
   },
 
@@ -15,7 +15,7 @@ export default Ember.Component.extend({
     this.notifyAboutSuccess();
   },
 
-  _p3(a) {
+  _p3(user, a) {
     return user.reload();
   }
 });
