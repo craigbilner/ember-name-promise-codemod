@@ -64,7 +64,7 @@ const makeBoundCall = (j, i, params) => {
   return j.callExpression(callee, [j.thisExpression(), ...params]);
 };
 
-const isFreeVar = path => path.name !== 'property';
+const isFreeVar = path => path.name !== 'property' || (path.name === 'property' && path.parent.value.computed);
 
 const toIdentifier = j => name => j.identifier(name);
 

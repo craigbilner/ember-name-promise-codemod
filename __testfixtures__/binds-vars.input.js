@@ -26,7 +26,8 @@ export default Ember.Component.extend({
           l.forEach(function(m, n) {
             m.set('n', n);
           });
-        });
+        })
+        .then((o) => o[f]);
     },
   },
 });
