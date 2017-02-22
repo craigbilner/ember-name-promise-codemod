@@ -73,6 +73,10 @@ const getDestructured = ({ name, value, properties, elements }) => {
     return [name];
   }
 
+  if (value && value.type === 'AssignmentPattern') {
+    return getDestructured(value.left);
+  }
+
   if (value) {
     return getDestructured(value);
   }
