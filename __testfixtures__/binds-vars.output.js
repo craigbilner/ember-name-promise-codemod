@@ -20,18 +20,18 @@ export default Ember.Component.extend({
   },
 
   _p2(l) {
-    l.forEach(function(m, n) {
-      m.set('n', n);
-    });
-  },
+      l.forEach(function(m, n) {
+        m.set('n', n);
+      });
+    },
 
   _p3(d, a, [k]) {
-    Ember.run(() => {
-      d
-        .objectAt(a)
-        .set('record', k);
-    });
-  },
+      Ember.run(() => {
+        d
+          .objectAt(a)
+          .set('record', k);
+      });
+    },
 
   _p4([{ foo: { foo2, foo3 } }, [{ bar: [{ bar1 }, bar2] }, baz]]) {
     return [foo2, foo3, bar1, bar2];
